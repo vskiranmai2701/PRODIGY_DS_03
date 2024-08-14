@@ -1,0 +1,131 @@
+ import pandas as pd
+ import numpy as np
+ import matplotlib.pyplot as plt
+ import seaborn as sns
+
+ import warnings
+ warnings.filterwarnings('ignore')
+
+ %matplotlib inline
+df=pd.read_csv('/content/bank.csv')
+df.rename(columns={'y':'deposit'},inplace=True)
+df.head()
+df.tail()
+df.shape
+df.columns
+df.dtypes
+df.dtypes.value_counts()
+df.info()
+df.duplicated().sum()
+df.isnull().sum()
+cat_cols=df.select_dtypes(include='object').columns
+print(cat_cols)
+
+num_cols=df.select_dtypes(include='number').columns
+print(num_cols)
+df.describe()
+df.describe(include='object')
+df.hist(figsize=(10,10),color='red')
+plt.show()
+for feature in cat_cols:
+    plt.figure(figsize=(5, 5))
+    sns.countplot(x=feature, data=df, palette='plasma')
+    plt.title(f'Bar plot of {feature}')  
+    plt.xlabel(feature)  
+    plt.ylabel('Count')  
+    plt.xticks(rotation=90)  
+    plt.show()
+df.plot(kind='box',subplots=True,layout=(2,5),figsize=(20,10),color='red')
+plt.show()
+columns=df[['age','campaign','duration']]
+q1=np.percentile(columns,25)
+q3=np.percentile(columns,75)
+iqr=q3-q1
+lower_bound=q1-(1.5*iqr)
+upper_bound=q3+(1.5*iqr)
+df[['age','campaign','duration']]=columns[(columns>lower_bound)&(columns<upper_bound)]
+df.plot(kind='box',subplots=True,layout=(2,5),figsize=(20,20),color='red')
+plt.show()
+numeric_df = df.select_dtypes(include=[float, int])
+corr = numeric_df.corr()
+filtered_corr = corr[abs(corr) >= 0.90]
+numeric_df = df.select_dtypes(include=[float, int])
+corr = numeric_df.corr()
+filtered_corr = corr[abs(corr) >= 0.90]
+filtered_corr = filtered_corr.fillna(0)
+sns.heatmap(filtered_corr, annot=True, cmap='coolwarm', linewidths=0.5, vmin=-1, vmax=1)
+plt.show()
+high_corr_cols={'education','duration','balance'}
+df1=df.copy()
+df1.columns
+df1.drop(high_corr_cols,inplace=True,axis=1)
+df1.columns
+df1.shape
+from sklearn.preprocessing import LabelEncoder
+lb=LabelEncoder()
+df_encoded = df1.apply(lb.fit_transform)
+df_encoded
+df_encoded['deposit'].value_counts()
+x=df_encoded.drop('deposit',axis=1)
+y=df_encoded['deposit']
+print(x.shape)
+print(y.shape)
+print(type(x))
+print(type(y))
+from sklearn.model_selection import train_test_split
+
+# Calculate 25% of 11162
+print(11162 * 0.25)
+x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.25,random_state=1)
+print(x_train.shape)
+print(x_test.shape)
+print(y_train.shape)
+print(y_test.shape)
+from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
+from sklearn.tree import DecisionTreeClassifier
+
+def eval_model(y_test, y_pred):
+    acc = accuracy_score(y_test, y_pred)
+    print('Accuracy Score:', acc)
+    cm = confusion_matrix(y_test, y_pred)
+    print('Confusion Matrix:\n', cm)
+    print('Classification Report:\n', classification_report(y_test, y_pred))
+
+def mscore(model):
+    train_score = model.score(x_train, y_train)
+    test_score = model.score(x_test, y_test)
+    print('Training Score:', train_score)
+    print('Testing Score:', test_score)
+
+# Initialize and fit the model
+dt = DecisionTreeClassifier(criterion='gini', max_depth=5, min_samples_split=10)
+dt.fit(x_train, y_train)
+
+# Make predictions
+y_pred = dt.predict(x_test)
+
+# Evaluate the model
+eval_model(y_test, y_pred)
+
+# Print training and testing scores
+mscore(dt)
+mscore(dt)
+ypred_dt=dt.predict(x_test)
+print(ypred_dt)
+eval_model(y_test,ypred_dt)
+from sklearn.tree import plot_tree
+cn=['no','yes']
+fn=x_train.columns
+print(fn)
+print(cn)
+plt.figure(figsize=(20,10))  # Adjust the figure size as needed
+plot_tree(dt, feature_names=x_train.columns, class_names=cn, filled=True)
+plt.show()
+dt1 = DecisionTreeClassifier(criterion='entropy',max_depth=4,min_samples_split=15)
+dt1.fit(x_train,y_train)
+mscore(dt1)
+ypred_dt1=dt1.predict(x_test)
+eval_model(y_test,ypred_dt1)
+plt.figure(figsize=(15,15))
+plot_tree(dt1,class_names=cn,filled=True)
+plt.show()
